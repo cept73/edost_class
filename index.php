@@ -23,7 +23,7 @@ require('EdostCalculator.php');
 		</tr>
 
 		<tr>
-			<td>Куда:</td>
+			<td>Город:</td>
 			<td><input type="text" id="edost_to_city" name="edost_to_city" size="35" maxlength="80"></td>
 			<td><span id="edost_to_region">-</span></td>
 		</tr>
@@ -73,9 +73,9 @@ require('EdostCalculator.php');
 
 <span id="calculationResult"></span>
 
-<script type="text/javascript" src="js/jquery-1.2.6.pack.js"></script>
-<script type='text/javascript' src='js/jquery.ajaxQueue.js'></script>
-<script type='text/javascript' src='js/jquery.autocomplete.pack.js'></script>
+<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.js"></script>
+<script type='text/javascript' src='https://code.jquery.com/ui/1.13.2/jquery-ui.js'></script>
 <script>
 
     let EdostCalculation = new (class {
@@ -166,7 +166,8 @@ require('EdostCalculator.php');
 
         constructor() {
             $(document).ready(() => {
-                $("#edost_to_city").autocomplete(this.cities, {
+                $("#edost_to_city").autocomplete({
+                    source          : this.cities,
                     delay           : 3,
                     minChars        : 1,
                     matchSubset     : 1,
