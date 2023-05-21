@@ -48,14 +48,16 @@ if ( $calculation['qty_company'] === 0 ) {
 // таблица с выбором
 	'<table align="center" width="700" class="table table-sm">
 		<tr height="15"><td>
-			<table align="center" width="700" cellpadding="0" cellspacing="0" border="0" bordercolor="#D0D0D0"><tr>
+			<table align="center" width="700" cellpadding="0" cellspacing="0" border="0" bordercolor="#D0D0D0">
+			<tr>
 				<td width="25"></td>
 				<td width="70"></td>
 				<td width="35%">Служба доставки</td>
 				<td width="20%" align="center">Тип отправления</td>
 				<td width="15%" align="center">Срок доставки</td>
 				<td align="center">Стоимость</td>
-			</tr></table>
+			</tr>
+			</table>
 		</td></tr>';
 
     $ar_office = [];

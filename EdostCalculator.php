@@ -53,13 +53,13 @@ class EdostCalculator
      * Код клиента, берется из .env
      * @var int 
      */
-    private int $account_id;
+    private int $accountId;
 
     /**
      * Пароль клиента, берется из .env
      * @var string
      */
-    private string $account_password;
+    private string $accountPassword;
 
     public ?int $maxCode = null;
 
@@ -68,9 +68,50 @@ class EdostCalculator
 
     public function __construct($eDostId, $eDostPassword, $eDostMaxCode = null)
     {
-        $this->account_id       = $eDostId;
-        $this->account_password = $eDostPassword;
+        $this->accountId        = $eDostId;
+        $this->accountPassword  = $eDostPassword;
         $this->maxCode          = $eDostMaxCode ?: self::DEFAULT_MAX_CODE;
+    }
+
+    /**
+     * Расчет стоимости доставки по параметрам пришедшим из POST
+     *
+     * @var array $postData
+     * @var ?string $fromCity
+     * @return ?array
+     */
+    public function calcByArray(array $postData, ?string $fromCity = null): ?array
+    {
+        if (
+            empty($postData['edost_to_city']) ||
+            empty($postData['edost_weight'])
+        ) {
+            return null;
+        }
+
+        if (
+            isset($postData['edost_length'])
+            && isset($postData['edost_width'])
+            && isset($postData['edost_height'])
+        ) {
+            $length = $this->parsedToCm($postData['edost_length']);
+            $width  = $this->parsedToCm($postData['edost_width']);
+            $height = $this->parsedToCm($postData['edost_height']);
+        }
+
+        $calculateParams = [
+            $postData['edost_to_city'],
+            $this->parsedKg($postData['edost_weight']),
+            $this->parsedEnsurance($postData['edost_strah'] ?? 0),
+            $length ?? 0,
+            $width ?? 0,
+            $height ?? 0,
+            $this->parsedZip($postData['edost_zip'] ?? null),
+            //здесь можно задать код города откуда неоходимо отправить посылку (используется только на специальном тарифном плане)
+            $fromCity
+        ];
+
+        return $this->calculate(...$calculateParams);
     }
 
     public static function getStatusMessage(string $statusCode): ?string
@@ -95,89 +136,6 @@ class EdostCalculator
         ];
 
         return $statusMessages[$statusCode] ?? 'В данный город автоматический расчет доставки не осуществляется';
-    }
-
-    private function countCrc16($data): int
-    {
-		$crc = 0xFFFF;
-		for ($dataIndex = 0; $dataIndex < strlen($data); $dataIndex ++) {
-			$x = (($crc >> 8) ^ ord($data[$dataIndex])) & 0xFF;
-			$x ^= $x >> 4;
-			$crc = (($crc << 8) ^ ($x << 12) ^ ($x << 5) ^ $x) & 0xFFFF;
-		}
-
-		return $crc;
-	}
-
-    /**
-     * Отправка POST запроса к сервису
-     *
-     * @var $params array Список параметров для отправки
-     * @throws HttpRequestException
-     */
-    private function sendRequest(array $params)
-    {
-        try {
-            $paramsString   = http_build_query($params);
-
-            $serviceUrl     = self::SERVICE_URL;
-            $parseUrl       = parse_url($serviceUrl);
-            $servicePath    = $parseUrl['path'];
-            $serviceHost    = $parseUrl['host'];
-
-            $serviceSocket = fsockopen($serviceHost, 80, $errno, $errMessage, 4);
-
-            if (!empty($errMessage) || empty($serviceSocket)) {
-                throw new HttpRequestException('Ошибка: Настройки сервера не позволяют отправить запрос на расчет', 400);
-            }
-
-            $paramsStringLength = strlen($paramsString);
-            fputs($serviceSocket, <<<HTML
-                POST $servicePath HTTP/1.0
-                Host: $serviceHost
-                Referer: $serviceUrl
-                Content-Type: application/x-www-form-urlencoded
-                Content-Length: $paramsStringLength
-                
-                $paramsString
-                
-                HTML
-            );
-
-            $response = '';
-            while ($content = fgets($serviceSocket, 512)) {
-                $response .= $content;
-            }
-            fclose($serviceSocket);
-
-            if ($this->test === false) {
-                $response = stristr($response, '<?xml version=');
-            }
-
-            return $response;
-        }
-        catch (HttpRequestException $exception) {
-            throw $exception;
-        }
-        catch (Throwable $throwable) {
-            throw new RuntimeException($throwable->getMessage());
-        }
-	}
-
-	//== Расчет стоимости доставки ====================================
-
-    private function cleanFromDigits($string): string
-    {
-        return trim(preg_replace("/[^0-9]/i", '', $string));
-    }
-
-    public function jsonWithStatus($status): array
-    {
-        return [
-            'qty_company'       => 0,
-            'stat'              => $status,
-            'status_message'    => self::getStatusMessage($status)
-        ];
     }
 
     /**
@@ -217,19 +175,16 @@ class EdostCalculator
         
         if ($doNotCount) {
             // Не показываем ошибку, но не считаем
-            print '???';
             return $this->jsonWithStatus(self::STATUS_INCORRECT_REQUEST);
         }
-
-		// $toCity = str_replace(' ', '%20', $toCity);
 
         try {
             /* if ($this->emulate) {
                 $xml = file_get_contents(__DIR__ . '/../cache.xml');
             } else {*/
             $xml = $this->sendRequest([
-                'id'        => $this->account_id,
-                'p'         => $this->account_password,
+                'id'        => $this->accountId,
+                'p'         => $this->accountPassword,
                 'to_city'   => $toCity,
                 'strah'     => $strah,
                 'weight'    => $weight,
@@ -337,8 +292,6 @@ class EdostCalculator
 
             //предупреждения
             $result['warning'] = $warnings;
-            //echo "<br><pre>".print_r($this->warning, true)."</pre>";
-            //echo "<br>------<pre>".print_r($this->rz, true)."</pre>------";
 
             foreach($rz as $n){
                 $i++;
@@ -380,6 +333,75 @@ class EdostCalculator
         }
 	}
 
+    /**
+     * Отправка POST запроса к сервису
+     *
+     * @var $params array Список параметров для отправки
+     * @throws HttpRequestException
+     */
+    private function sendRequest(array $params)
+    {
+        try {
+            $paramsString   = http_build_query($params);
+
+            $serviceUrl     = self::SERVICE_URL;
+            $parseUrl       = parse_url($serviceUrl);
+            $servicePath    = $parseUrl['path'];
+            $serviceHost    = $parseUrl['host'];
+
+            $serviceSocket = fsockopen($serviceHost, 80, $errno, $errMessage, 4);
+
+            if (!empty($errMessage) || empty($serviceSocket)) {
+                throw new HttpRequestException('Ошибка: Настройки сервера не позволяют отправить запрос на расчет', 400);
+            }
+
+            $paramsStringLength = strlen($paramsString);
+            fputs($serviceSocket, <<<HTML
+                POST $servicePath HTTP/1.0
+                Host: $serviceHost
+                Referer: $serviceUrl
+                Content-Type: application/x-www-form-urlencoded
+                Content-Length: $paramsStringLength
+                
+                $paramsString
+                
+                HTML
+            );
+
+            $response = '';
+            while ($content = fgets($serviceSocket, 512)) {
+                $response .= $content;
+            }
+            fclose($serviceSocket);
+
+            if ($this->test === false) {
+                $response = stristr($response, '<?xml version=');
+            }
+
+            return $response;
+        }
+        catch (HttpRequestException $exception) {
+            throw $exception;
+        }
+        catch (Throwable $throwable) {
+            throw new RuntimeException($throwable->getMessage());
+        }
+    }
+
+    private function cleanFromDigits($string): string
+    {
+        return trim(preg_replace("/[^0-9]/i", '', $string));
+    }
+
+    private function jsonWithStatus($status): array
+    {
+        return [
+            'qty_company'       => 0,
+            'stat'              => $status,
+            'status_message'    => self::getStatusMessage($status)
+        ];
+    }
+
     private function parsedKg(string $string)
     {
         return $this->removeNonDigitsAndCutAfter($string, 5);
@@ -414,44 +436,15 @@ class EdostCalculator
         return $string ? preg_replace('/[^a-z0-9А-я\-ёЁ(),.]/i', '', $string) : '';
     }
 
-    /**
-     * Расчет стоимости доставки по параметрам пришедшим из POST
-     *
-     * @var array $postData
-     * @var ?string $fromCity
-     * @return ?array
-     */
-    public function calcByArray(array $postData, ?string $fromCity = null): ?array
+    private function countCrc16($data): int
     {
-        if (
-            empty($postData['edost_to_city']) ||
-            empty($postData['edost_weight'])
-        ) {
-            return null;
+        $crc = 0xFFFF;
+        for ($dataIndex = 0; $dataIndex < strlen($data); $dataIndex ++) {
+            $x = (($crc >> 8) ^ ord($data[$dataIndex])) & 0xFF;
+            $x ^= $x >> 4;
+            $crc = (($crc << 8) ^ ($x << 12) ^ ($x << 5) ^ $x) & 0xFFFF;
         }
 
-        if (
-            isset($postData['edost_length'])
-            && isset($postData['edost_width'])
-            && isset($postData['edost_height'])
-        ) {
-            $length = $this->parsedToCm($postData['edost_length']);
-            $width  = $this->parsedToCm($postData['edost_width']);
-            $height = $this->parsedToCm($postData['edost_height']);
-        }
-
-        $calculateParams = [
-            $postData['edost_to_city'],
-            $this->parsedKg($postData['edost_weight']),
-            $this->parsedEnsurance($postData['edost_strah'] ?? 0),
-            $length ?? 0,
-            $width ?? 0,
-            $height ?? 0,
-            $this->parsedZip($postData['edost_zip'] ?? null),
-            //здесь можно задать код города откуда неоходимо отправить посылку (используется только на специальном тарифном плане)
-            $fromCity
-        ];
-
-        return $this->calculate(...$calculateParams);
+        return $crc;
     }
 }
