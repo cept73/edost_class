@@ -211,13 +211,13 @@ class EdostCalculator
             $doNotCount = $toCityId < 1 || $toCityId > $this->maxCode;
 		} else {
 			//Проверяем контрольную сумму города для расчета, если не совпадает, то даже не посылаем запрос на расчет
-            $city = iconv('cp1251', 'utf-8', $toCity);
-            $crc16 = $this->countCrc16(mb_strtoupper($city));
+            $crc16 = $this->countCrc16(mb_strtoupper($toCity));
             $doNotCount = !in_array($crc16, self::CRC_LIST);
 		}
         
         if ($doNotCount) {
             // Не показываем ошибку, но не считаем
+            print '???';
             return $this->jsonWithStatus(self::STATUS_INCORRECT_REQUEST);
         }
 
@@ -380,19 +380,12 @@ class EdostCalculator
         }
 	}
 
-    private function parseCity(string $city): string
-    {
-        $city = iconv('utf-8', 'cp1251', $city);
-
-        return trim(preg_replace("/[^a-z0-9А-я\-(),.' ]/i",'', $city));
-    }
-
-    private function parseKg(string $string)
+    private function parsedKg(string $string)
     {
         return $this->removeNonDigitsAndCutAfter($string, 5);
     }
 
-    private function parseToCm(string $string)
+    private function parsedToCm(string $string)
     {
         return $this->removeNonDigitsAndCutAfter($string, 8);
     }
@@ -403,7 +396,7 @@ class EdostCalculator
      * @param string $string
      * @return int
      */
-    private function parseEnsurance(string $string): int
+    private function parsedEnsurance(string $string): int
     {
         return $this->removeNonDigitsAndCutAfter($string, 12) ?: 0;
     }
@@ -416,7 +409,7 @@ class EdostCalculator
         return preg_replace('/[^\d.]/', '', $string);
     }
 
-    private function parseZip(?string $string)
+    private function parsedZip(?string $string)
     {
         return $string ? preg_replace('/[^a-z0-9А-я\-ёЁ(),.]/i', '', $string) : '';
     }
@@ -432,8 +425,7 @@ class EdostCalculator
     {
         if (
             empty($postData['edost_to_city']) ||
-            empty($postData['edost_weight']) ||
-            empty($postData['edost_strah'])
+            empty($postData['edost_weight'])
         ) {
             return null;
         }
@@ -443,19 +435,19 @@ class EdostCalculator
             && isset($postData['edost_width'])
             && isset($postData['edost_height'])
         ) {
-            $length = $this->parseToCm($postData['edost_length']);
-            $width  = $this->parseToCm($postData['edost_width']);
-            $height = $this->parseToCm($postData['edost_height']);
+            $length = $this->parsedToCm($postData['edost_length']);
+            $width  = $this->parsedToCm($postData['edost_width']);
+            $height = $this->parsedToCm($postData['edost_height']);
         }
 
         $calculateParams = [
-            $this->parseCity($postData['edost_to_city']),
-            $this->parseKg($postData['edost_weight']),
-            $this->parseEnsurance($postData['edost_strah']),
+            $postData['edost_to_city'],
+            $this->parsedKg($postData['edost_weight']),
+            $this->parsedEnsurance($postData['edost_strah'] ?? 0),
             $length ?? 0,
             $width ?? 0,
             $height ?? 0,
-            $this->parseZip($postData['edost_zip'] ?? null),
+            $this->parsedZip($postData['edost_zip'] ?? null),
             //здесь можно задать код города откуда неоходимо отправить посылку (используется только на специальном тарифном плане)
             $fromCity
         ];

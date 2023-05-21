@@ -7,75 +7,65 @@ require('EdostCalculator.php');
 <html lang="ru">
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Пример - Расчет по России с автозаполнением города (с jQuery)</title>
-	<link rel="stylesheet" type="text/css" href="js/jquery.autocomplete.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
+          integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+    <!--<link rel="stylesheet" type="text/css" href="js/jquery.autocomplete.css" />-->
 </head>
 <body>
 
-<p><b>Расчет стоимости экспресс доставки</b></p>
+<div class="container my-5" style="max-width: 600px">
 
-<form name="calc" method="post" onSubmit="return false;">
-	<table>
-		<tr>
-			<td></td>
-			<td>Город:</td>
-			<td>Регион:</td>
-		</tr>
+    <h1>Расчет стоимости экспресс доставки</h1>
 
-		<tr>
-			<td>Город:</td>
-			<td><input type="text" id="edost_to_city" name="edost_to_city" size="35" maxlength="80"></td>
-			<td><span id="edost_to_region">-</span></td>
-		</tr>
+    <form name="calc" method="post" onSubmit="return false;">
+        <div class="row mt-2">
+            <div class="col-md-8 mt-3 form-floating">
+                <input type="text" class="form-control" id="edost_to_city" name="edost_to_city" required="required">
+                <label for="edost_to_city" class="px-4">Город:</label>
+            </div>
+            <div class="col-md-4 mt-3 form-floating">
+                <input type="text" class="form-control" id="edost_zip" name="edost_zip" size="6" maxlength="6">
+                <label for="edost_zip" class="px-4">Индекс:</label>
+            </div>
+        </div>
 
-		<tr>
-			<td>Индекс:</td>
-			<td><input type="text" id="edost_zip" name="edost_zip" size="6" maxlength="6"></td>
-			<td><p id="errorsMessage" style="color:red"></p></td>
-		</tr>
+        <div class="row">
+            <div class="col-sm-6 col-md-3 mt-3 form-floating">
+                <input type="text" class="form-control" id="edost_weight" name="edost_weight" size="5" maxlength="5">
+                <label for="edost_weight" class="px-4">Вес (кг):</label>
+            </div>
+            <div class="col-sm-6 col-md-3 mt-3 form-floating">
+                <input type="text" class="form-control" id="edost_length" name="edost_length" size="10" maxlength="10">
+                <label for="edost_length" class="px-4">Длина (см):</label>
+            </div>
+            <div class="col-sm-6 col-md-3 mt-3 form-floating">
+                <input type="text" class="form-control" id="edost_width" name="edost_width" size="10" maxlength="10">
+                <label for="edost_width" class="px-4">Ширина (см):</label>
+            </div>
+            <div class="col-sm-6 col-md-3 mt-3 form-floating">
+                <input type="text" class="form-control" id="edost_height" name="edost_height" size="10" maxlength="10">
+                <label for="edost_height" class="px-4">Высота (см):</label>
+            </div>
+        </div>
 
-		<tr>
-			<td>Вес:</td>
-			<td><input type="text" id="edost_weight" name="edost_weight" size="5" maxlength="5"> кг.</td>
-			<td></td>
-		</tr>
+        <div class="row mt-3">
+            <div class="col-offset-6 col-6">
+                <div id="errorsMessage" style="color:red"></div>
+                <input type="submit" class="btn btn-primary" value="Расчет" onclick="EdostCalculation.calculate();">
+            </div>
+        </div>
+    </form>
 
-		<tr>
-			<td>Оценка:</td>
-			<td><input type="text" id="edost_strah" name="edost_strah" size="10" maxlength="12"> руб.</td>
-			<td></td>
-		</tr>
+    <span id="calculationResult"></span>
 
-		<tr>
-			<td>Длина:</td>
-			<td><input type="text" id="edost_length" name="edost_length" size="10" maxlength="10"> см.</td>
-			<td></td>
-		</tr>
-
-		<tr>
-			<td>Ширина:</td>
-			<td><input type="text" id="edost_width" name="edost_width" size="10" maxlength="10"> см.</td>
-			<td></td>
-		</tr>
-
-		<tr>
-			<td>Высота:</td>
-			<td><input type="text" id="edost_height" name="edost_height" size="10" maxlength="10"> см.</td>
-			<td></td>
-		</tr>
-
-		<tr>
-			<td></td>
-			<td><input type="submit" name="B_Calc" value="Расчет" onclick="EdostCalculation.calculate();"></td>
-		</tr>
-	</table>
-</form>
-
-<span id="calculationResult"></span>
-
-<link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
 <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.0.js"></script>
 <script type='text/javascript' src='https://code.jquery.com/ui/1.13.2/jquery-ui.js'></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
+        crossorigin="anonymous"></script>
 <script>
 
     let EdostCalculation = new (class {
@@ -83,8 +73,7 @@ require('EdostCalculator.php');
         regions = [<?= '"' . implode('", "', EdostCalculator::REGIONS_LIST) . '"' ?>];
         citiesToRegions = [<?= implode(', ', EdostCalculator::CITIES_TO_REGION_LIST) ?>];
 
-        detectRegion = () => {
-            const toCity = $("#edost_to_city").val();
+        detectRegion = (toCity) => {
             if (toCity === '') {
                 return
             }
@@ -106,7 +95,7 @@ require('EdostCalculator.php');
                 regionName = '-';
             }
 
-            $("#edost_to_region").html(regionName);
+            $("#edost_to_city").attr('title', regionName);
         }
 
         setCalculateResult = (result = '') => {
@@ -165,26 +154,23 @@ require('EdostCalculator.php');
         }
 
         constructor() {
-            $(document).ready(() => {
-                $("#edost_to_city").autocomplete({
-                    source          : this.cities,
-                    delay           : 3,
-                    minChars        : 1,
-                    matchSubset     : 1,
-                    autoFill        : true,
-                    maxItemsToShow  : 10,
-                    max             : 20,
-                });
-
-                $(":text, textarea")
-                    .result(this.detectRegion)
-                    .next().click(() => {
-                        $(this).prev().search();
-                    });
+            $("#edost_to_city").autocomplete({
+                delay       : 3,
+                minLength   : 1,
+                autoFill    : true,
+                source      : (request, response) => {
+                    const results = $.ui.autocomplete.filter(this.cities, request.term);
+                    response(results.slice(0, 15));
+                },
+                select      : (event, ui) => {
+                    this.detectRegion(ui.item?.value);
+                }
             });
         }
     });
 </script>
+
+</div>
 
 </body>
 </html>

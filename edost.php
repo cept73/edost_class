@@ -46,7 +46,7 @@ if ( $calculation['qty_company'] === 0 ) {
 } else {
     $st .=
 // таблица с выбором
-	'<table align="center" width="700" cellpadding="0" cellspacing="0" border="1" bordercolor="#D0D0D0">
+	'<table align="center" width="700" class="table table-sm">
 		<tr height="15"><td>
 			<table align="center" width="700" cellpadding="0" cellspacing="0" border="0" bordercolor="#D0D0D0"><tr>
 				<td width="25"></td>
@@ -61,6 +61,7 @@ if ( $calculation['qty_company'] === 0 ) {
     $ar_office = [];
     $office = '';
     for ($i=1; $i<=$calculation['qty_company']; $i++) {
+        /*
         if ($calculation['name'.$i]=='') $q=''; else $q=' ('.$calculation['name'.$i].')';
 
         if ( isset($calculation['office'.$i]) && isset($calculation['office'.$i][0]['name']) ) {
@@ -96,13 +97,12 @@ if ( $calculation['qty_company'] === 0 ) {
 
             }
 
-        }
+        }*/
 
         if ($calculation['id'.$i] == 29) {
             $flPickPoint = true;
             $refPickPoint = '<br><a style="font-family: Arial; font-size: 10pt; color: rgb(222, 0, 0); text-decoration: none;" href="#" id="EdostPickPointRef1" onclick="PickPoint.open(EdostPickPoint, {city:\''.$calculation['pickpointmap'.$i].'\', ids:null});">Выбрать постамат или пункт выдачи</a>';
-        }
-        else {
+        } else {
             $refPickPoint = '';
         }
 
