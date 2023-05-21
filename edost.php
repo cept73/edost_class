@@ -21,10 +21,10 @@
 
 //== Расчет доставки ==============================================
 $EdostConfig = require('EdostCalculator.config.php');
-require('EdostCalculator.php');
+require('EdostService.php');
 
-$EdostCalculator = new EdostCalculator($EdostConfig['id'], $EdostConfig['password'], $EdostConfig['max_code']);
-$calculation = $EdostCalculator->calcByArray($_POST);
+$EdostService = new EdostService($EdostConfig['id'], $EdostConfig['password'], $EdostConfig['max_code']);
+$calculation = $EdostService->calcByArray($_POST);
 
 //	Результат выводится в массив r:
 //	1. r['stat'] - код результата запроса

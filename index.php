@@ -1,7 +1,7 @@
 <?php
 /** @noinspection SpellCheckingInspection */
 
-require('EdostCalculator.php');
+require('EdostService.php');
 
 ?>
 <html lang="ru">
@@ -69,9 +69,9 @@ require('EdostCalculator.php');
 <script>
 
     let EdostCalculation = new (class {
-        cities  = [<?= '"' . implode('","', EdostCalculator::CITIES_LIST) . '"' ?>];
-        regions = [<?= '"' . implode('", "', EdostCalculator::REGIONS_LIST) . '"' ?>];
-        citiesToRegions = [<?= implode(', ', EdostCalculator::CITIES_TO_REGION_LIST) ?>];
+        cities  = [<?= '"' . implode('","', EdostService::CITIES_LIST) . '"' ?>];
+        regions = [<?= '"' . implode('", "', EdostService::REGIONS_LIST) . '"' ?>];
+        citiesToRegions = [<?= implode(', ', EdostService::CITIES_TO_REGION_LIST) ?>];
 
         detectRegion = (toCity) => {
             if (toCity === '') {

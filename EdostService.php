@@ -3,6 +3,7 @@
 
 /*
 == Класс EdostCalculation  (C) eDost.ru ======================================
+    2023 refactoring by Cept
 
     Класс служит для расчета доставки.
     
@@ -17,7 +18,7 @@
 	  3. Разбор XML и выдача результатов в массив.
 
 */
-class EdostCalculator
+class EdostService
 {
     /**
      * Адрес сервиса
