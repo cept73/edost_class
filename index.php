@@ -53,7 +53,7 @@ require('EdostService.php');
         <div class="row mt-3">
             <div class="col-offset-6 col-6">
                 <div id="errorsMessage" style="color:red"></div>
-                <input type="submit" class="btn btn-primary" value="Расчет" onclick="EdostService.calculate();">
+                <input type="submit" class="btn btn-primary" value="Расчет" onclick="EdostServiceInstance.calculate();">
             </div>
         </div>
     </form>
@@ -67,7 +67,7 @@ require('EdostService.php');
         crossorigin="anonymous"></script>
 <script type="text/javascript" src="js/edost-service.js"></script>
 <script>
-    let EdostService = new EdostService(
+    let EdostServiceInstance = new EdostService(
         [<?= '"' . implode('","', EdostService::CITIES_LIST) . '"' ?>],
         [<?= '"' . implode('", "', EdostService::REGIONS_LIST) . '"' ?>],
         [<?= implode(', ', EdostService::CITIES_TO_REGION_LIST) ?>]
