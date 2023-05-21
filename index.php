@@ -12,7 +12,6 @@ require('EdostService.php');
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css"
           integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
     <link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
-    <!--<link rel="stylesheet" type="text/css" href="js/jquery.autocomplete.css" />-->
 </head>
 <body>
 
@@ -54,7 +53,7 @@ require('EdostService.php');
         <div class="row mt-3">
             <div class="col-offset-6 col-6">
                 <div id="errorsMessage" style="color:red"></div>
-                <input type="submit" class="btn btn-primary" value="Расчет" onclick="EdostCalculation.calculate();">
+                <input type="submit" class="btn btn-primary" value="Расчет" onclick="EdostService.calculate();">
             </div>
         </div>
     </form>
@@ -66,108 +65,13 @@ require('EdostService.php');
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4"
         crossorigin="anonymous"></script>
+<script type="text/javascript" src="js/edost-service.js"></script>
 <script>
-
-    let EdostCalculation = new (class {
-        cities  = [<?= '"' . implode('","', EdostService::CITIES_LIST) . '"' ?>];
-        regions = [<?= '"' . implode('", "', EdostService::REGIONS_LIST) . '"' ?>];
-        citiesToRegions = [<?= implode(', ', EdostService::CITIES_TO_REGION_LIST) ?>];
-
-        detectRegion = (toCity) => {
-            if (toCity === '') {
-                return
-            }
-
-            let cityIndex = this.cities.indexOf(toCity);
-            let regionName = null;
-            if (cityIndex >= 0) {
-                let regionId = this.citiesToRegions[cityIndex];
-                regionName = this.regions[regionId];
-            }
-
-            this.setRegion(regionName);
-
-            $("#edost_weight").focus();
-        }
-
-        setRegion = (regionName = null) => {
-            if (!regionName) {
-                regionName = '-';
-            }
-
-            $("#edost_to_city").attr('title', regionName);
-        }
-
-        setCalculateResult = (result = '') => {
-            $("#calculationResult").html(result);
-        }
-
-        setErrorsMessage = (errorsMessage = '') => {
-            $("#errorsMessage").html(errorsMessage);
-        }
-
-        calculate = () => {
-            this.setErrorsMessage();
-            this.setCalculateResult();
-
-            let city            = $("#edost_to_city").val();
-            let weight          = $("#edost_weight").val();
-            let strah           = $("#edost_strah").val();
-            let edost_length    = $("#edost_length").val();
-            let edost_width     = $("#edost_width").val();
-            let edost_height    = $("#edost_height").val();
-            let edost_zip       = $("#edost_zip").val();
-
-            let errors = [];
-            if (city === '') {
-                errors.push('Не заполнен город доставки!');
-            }
-            if (weight === '') {
-                errors.push('Не заполнен вес!');
-            } else {
-                if (weight.indexOf(',') >= 0) {
-                    weight = weight.replace(',', '.');
-                }
-                if (isNaN(weight)) {
-                    errors.push('Вес должен быть цифра!');
-                }
-            }
-            if (errors.length) {
-                this.setErrorsMessage(errors.join('<br />'));
-                return false;
-            }
-
-            this.setCalculateResult('<b>Идет расчет стоимости доставки. Ждите...<\/b>');
-            $.post("edost.php", {
-                edost_to_city   : city,
-                edost_weight    : weight,
-                edost_strah     : strah,
-                edost_kod       : 1,
-                edost_rus       : 1,
-                edost_length    : edost_length,
-                edost_width     : edost_width,
-                edost_height    : edost_height,
-                edost_zip       : edost_zip
-            }, (responseHtml) => {
-                this.setCalculateResult(responseHtml);
-            });
-        }
-
-        constructor() {
-            $("#edost_to_city").autocomplete({
-                delay       : 3,
-                minLength   : 1,
-                autoFill    : true,
-                source      : (request, response) => {
-                    const results = $.ui.autocomplete.filter(this.cities, request.term);
-                    response(results.slice(0, 15));
-                },
-                select      : (event, ui) => {
-                    this.detectRegion(ui.item?.value);
-                }
-            });
-        }
-    });
+    let EdostService = new EdostService(
+        [<?= '"' . implode('","', EdostService::CITIES_LIST) . '"' ?>],
+        [<?= '"' . implode('", "', EdostService::REGIONS_LIST) . '"' ?>],
+        [<?= implode(', ', EdostService::CITIES_TO_REGION_LIST) ?>]
+    )
 </script>
 
 </div>
